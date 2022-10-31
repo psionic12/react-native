@@ -190,7 +190,7 @@ const AppRegistry = {
     appParameters: any,
     displayMode?: number,
   ): void {
-    console.log('my_fabric_profile: runapplication');
+    console.log('my_fabric_profile: runapplication at ' + Date.now());
     if (appKey !== 'LogBox') {
       const logParams = __DEV__
         ? '" with ' + JSON.stringify(appParameters)

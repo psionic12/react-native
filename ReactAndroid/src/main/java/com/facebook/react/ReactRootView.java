@@ -291,7 +291,7 @@ public class ReactRootView extends FrameLayout implements RootView, ReactRoot {
     try {
       super.dispatchDraw(canvas);
       if (getChildCount() > 0 && mReactInstanceManager != null) {
-        Log.d("my_fabric_profile", "dispatchDraw");
+        Log.d("my_fabric_profile", "dispatchDraw at " + System.currentTimeMillis());
       }
     } catch (StackOverflowError e) {
       // Adding special exception management for StackOverflowError for logging purposes.
