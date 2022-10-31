@@ -20,6 +20,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.DisplayCutout;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -289,6 +290,9 @@ public class ReactRootView extends FrameLayout implements RootView, ReactRoot {
   protected void dispatchDraw(Canvas canvas) {
     try {
       super.dispatchDraw(canvas);
+      if (getChildCount() > 0 && mReactInstanceManager != null) {
+        Log.d("my_fabric_profile", "dispatchDraw");
+      }
     } catch (StackOverflowError e) {
       // Adding special exception management for StackOverflowError for logging purposes.
       // This will be removed in the future.

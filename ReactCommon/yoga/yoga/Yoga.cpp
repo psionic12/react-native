@@ -17,6 +17,8 @@
 #include "YGNodePrint.h"
 #include "Yoga-internal.h"
 #include "event/event.h"
+#include <string>
+#include <chrono>
 #ifdef _MSC_VER
 #include <float.h>
 
@@ -4115,12 +4117,54 @@ static void unsetUseLegacyFlagRecursively(YGNodeRef node) {
   }
 }
 
+class MyTrace {
+ public:
+  explicit MyTrace(const char* tag, const char* function) : tag(tag), function(function),
+                                                            start(std::chrono::duration_cast< std::chrono::nanoseconds >(
+                                             std::chrono::system_clock::now().time_since_epoch()
+                                         )) {
+    level += 1;
+  }
+  ~MyTrace() {
+    std::chrono::nanoseconds now = std::chrono::duration_cast< std::chrono::nanoseconds >(
+        std::chrono::system_clock::now().time_since_epoch()
+    );
+    if (level == 1) {
+      auto duration = (now - start).count();
+      total_layout_time += duration;
+      Log::log(
+          (YGNode*) nullptr,
+          YGLogLevelWarn,
+          nullptr,
+          "%s %s: duration: %lld, total: %lld",tag, function, duration, total_layout_time);
+    } else {
+      Log::log(
+          (YGNode*) nullptr,
+          YGLogLevelWarn,
+          nullptr,
+          "%s %s: recursive",tag, function);
+    }
+
+    level -= 1;
+  }
+ private:
+  static long long total_layout_time;
+  static int level;
+  const char* tag;
+  const char* function;
+  std::chrono::nanoseconds start;
+};
+
+long long MyTrace::total_layout_time = 0;
+int MyTrace::level = 0;
+
 YOGA_EXPORT void YGNodeCalculateLayoutWithContext(
     const YGNodeRef node,
     const float ownerWidth,
     const float ownerHeight,
     const YGDirection ownerDirection,
     void* layoutContext) {
+  MyTrace s("my_fabric_profile", "YGNodeCalculateLayoutWithContext");
 
   Event::publish<Event::LayoutPassStart>(node, {layoutContext});
   LayoutData markerData = {};
