@@ -8,7 +8,13 @@
  * @flow
  */
 
-import {BackHandler, StyleSheet, useColorScheme, View} from 'react-native';
+import {
+  BackHandler,
+  StyleSheet,
+  useColorScheme,
+  View,
+  LogBox,
+} from 'react-native';
 import * as React from 'react';
 
 import RNTesterModuleContainer from './components/RNTesterModuleContainer';
@@ -17,23 +23,28 @@ import RNTesterNavBar, {navBarHeight} from './components/RNTesterNavbar';
 import RNTesterList from './utils/RNTesterList';
 import {
   Screens,
-  initialNavigationState,
+  initialState,
   getExamplesListWithBookmarksAndRecentlyUsed,
+  getInitialStateFromAsyncStorage,
 } from './utils/testerStateUtils';
-import {
-  RNTesterNavigationReducer,
-  RNTesterNavigationActionsType,
-} from './utils/RNTesterNavigationReducer';
+import {useAsyncStorageReducer} from './utils/useAsyncStorageReducer';
+import {RNTesterReducer, RNTesterActionsType} from './utils/RNTesterReducer';
 import {RNTesterThemeContext, themes} from './components/RNTesterTheme';
 import RNTTitleBar from './components/RNTTitleBar';
 import {RNTesterEmptyBookmarksState} from './components/RNTesterEmptyBookmarksState';
 
-// RNTester App currently uses in memory storage for storing navigation state
+const APP_STATE_KEY = 'RNTesterAppState.v3';
+
+// RNTester App currently uses AsyncStorage from react-native for storing navigation state
+// and bookmark items.
+// TODO: Vendor AsyncStorage or create our own.
+LogBox.ignoreLogs([/AsyncStorage has been extracted from react-native/]);
 
 const RNTesterApp = (): React.Node => {
-  const [state, dispatch] = React.useReducer(
-    RNTesterNavigationReducer,
-    initialNavigationState,
+  const [state, dispatch] = useAsyncStorageReducer(
+    RNTesterReducer,
+    initialState,
+    APP_STATE_KEY,
   );
   const colorScheme = useColorScheme();
 
@@ -46,6 +57,17 @@ const RNTesterApp = (): React.Node => {
     recentlyUsed,
   } = state;
 
+  React.useEffect(() => {
+    getInitialStateFromAsyncStorage(APP_STATE_KEY).then(
+      initialStateFromStorage => {
+        dispatch({
+          type: RNTesterActionsType.INIT_FROM_STORAGE,
+          data: initialStateFromStorage,
+        });
+      },
+    );
+  }, [dispatch]);
+
   const examplesList = React.useMemo(
     () =>
       getExamplesListWithBookmarksAndRecentlyUsed({bookmarks, recentlyUsed}),
@@ -54,7 +76,7 @@ const RNTesterApp = (): React.Node => {
 
   const handleBackPress = React.useCallback(() => {
     if (activeModuleKey != null) {
-      dispatch({type: RNTesterNavigationActionsType.BACK_BUTTON_PRESS});
+      dispatch({type: RNTesterActionsType.BACK_BUTTON_PRESS});
     }
   }, [dispatch, activeModuleKey]);
 
@@ -81,7 +103,7 @@ const RNTesterApp = (): React.Node => {
   const handleModuleCardPress = React.useCallback(
     ({exampleType, key, title}) => {
       dispatch({
-        type: RNTesterNavigationActionsType.MODULE_CARD_PRESS,
+        type: RNTesterActionsType.MODULE_CARD_PRESS,
         data: {exampleType, key, title},
       });
     },
@@ -89,9 +111,9 @@ const RNTesterApp = (): React.Node => {
   );
 
   const handleModuleExampleCardPress = React.useCallback(
-    (exampleName: string) => {
+    exampleName => {
       dispatch({
-        type: RNTesterNavigationActionsType.EXAMPLE_CARD_PRESS,
+        type: RNTesterActionsType.EXAMPLE_CARD_PRESS,
         data: {key: exampleName},
       });
     },
@@ -101,7 +123,7 @@ const RNTesterApp = (): React.Node => {
   const toggleBookmark = React.useCallback(
     ({exampleType, key}) => {
       dispatch({
-        type: RNTesterNavigationActionsType.BOOKMARK_PRESS,
+        type: RNTesterActionsType.BOOKMARK_PRESS,
         data: {exampleType, key},
       });
     },
@@ -109,9 +131,9 @@ const RNTesterApp = (): React.Node => {
   );
 
   const handleNavBarPress = React.useCallback(
-    (args: {screen: string}) => {
+    args => {
       dispatch({
-        type: RNTesterNavigationActionsType.NAVBAR_PRESS,
+        type: RNTesterActionsType.NAVBAR_PRESS,
         data: {screen: args.screen},
       });
     },

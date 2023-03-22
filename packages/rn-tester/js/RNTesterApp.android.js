@@ -10,7 +10,8 @@
 
 import {AppRegistry} from 'react-native';
 
-import RNTesterApp from './RNTesterAppShared';
+import RNTesterApp from './RNTesterAppShared2';
+
 
 AppRegistry.registerComponent('RNTesterApp', () => RNTesterApp);
 
