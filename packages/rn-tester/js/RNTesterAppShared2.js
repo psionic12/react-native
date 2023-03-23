@@ -1,68 +1,98 @@
-import React, {PureComponent} from 'react';
-import {
-    View,
-    ScrollView,
-    Animated
-} from 'react-native';
-import Cell from './cell';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Button } from 'react-native';
 
+const commentsArr = [
+  {
+    comment: 'This is a very useful comment about the code.',
+  },
+  {
+    comment: 'This comment provides additional context for the code.',
+  },
+  {
+    comment: 'This comment explains potential issues with the code.',
+  },
+  {
+    comment: 'This comment suggests possible improvements to the code.',
+  },
+  {
+    comment: 'This comment summarizes the purpose of the code.',
+  },
+];
 
-class RNTesterAppShared extends PureComponent {
-    constructor(props) {
-        super(props);
-        this.state = {
-            selected: false,
-            data: Array.from({ length: 10 }).map((_, index) => index),
-            scrollY: 0,
-        };
+const RNTesterApp = () => {
+  const [selectedComments, setSelectedComments] = useState([]);
+
+  const [comments, setComments] = useState(commentsArr);
+
+  const handleScroll = ({ nativeEvent }) => {
+    if (isCloseToBottom(nativeEvent)) {
+      // Load more comments
     }
-    showExample(exampleName) {
-        // const res = await Ext.open(exampleName);
-    }
+  };
 
-    // render test: return lots of complicated Pressable components
-    renderTest() {
-        const arr = [];
-        for (let i = 0; i < 10; i++) {
-            arr.push();
-        }
-        return arr;
-    }
+  const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
+    const paddingToBottom = 20;
+    return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+  };
 
-    loadMoreData() {
-        const { data } = this.state;
-        const newData = data.concat(Array.from({ length: 1 }).map((_, index) => index + data.length));
-        this.setState({ data: newData });
-    }
+  const handleCommentPress = (index) => {
+    const newSelectedComments = [...selectedComments];
+    newSelectedComments[index] = !newSelectedComments[index];
+    setSelectedComments(newSelectedComments);
+  };
 
-    isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
-      console.log(layoutMeasurement, contentOffset, contentSize);
-        const paddingToBottom = 20;
-        return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
-    };
+  const handleAddComment = () => {
+    const newComments = [...comments];
+    newComments.push({
+      comment: 'This is a new comment.',
+    });
+    setComments(newComments);
 
-    render() {
-        return (
-            <View style={{ flex: 1 }}>
-                <ScrollView
-                    scrollEventThrottle={16}
-                    onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: this.state.scrollY } } }])}
-                    onMomentumScrollEnd={({ nativeEvent }) => {
-                        if (this.isCloseToBottom(nativeEvent)) {
-                            this.loadMoreData();
-                        }
-                    }}
-                    style={{
-                        flexGrow: 1,
-                        flexShrink: 1,
-                        backgroundColor: '#f6f7f8'}}>
-                    {this.state.data.map((_, index) => (
-                        <Cell idx={index} onMyPress={() => this.showExample('ErrorCase')} />
-                    ))}
-                </ScrollView>
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView onScroll={handleScroll}>
+        {comments.map((_, index) => (
+          <TouchableOpacity key={`comment-${index}`} onPress={() => handleCommentPress(index)} activeOpacity={1}>
+            <View style={[styles.card, selectedComments[index] ? { backgroundColor: 'yellow' } : null, {
+              flexDirection: 'row'
+            }]}>
+              {comments[index].comment.split(' ').map((word) => (
+                <Text key={`word-${index}`}>{word} </Text>
+              ))}
             </View>
-        );
-    }
-}
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+      <View style={styles.buttonContainer}>
+        <Button title="Add Comment" onPress={handleAddComment} />
+      </View>
+    </View>
+  );
+};
 
-export default RNTesterAppShared;
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    elevation: 3,
+    shadowOffset: { width: 1, height: 1 },
+    shadowColor: '#333',
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    marginHorizontal: 4,
+    marginVertical: 6,
+    padding: 10,
+  },
+  buttonContainer: {
+    margin: 10,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+});
+
+export default RNTesterApp;
+
